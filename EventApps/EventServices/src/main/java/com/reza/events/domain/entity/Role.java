@@ -1,5 +1,6 @@
 package com.reza.events.domain.entity;
 
+import com.reza.events.enums.UserRoleType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

@@ -1,14 +1,16 @@
 package com.reza.events.auth.security;
 
+import com.reza.events.enums.UserRoleType;
 import com.reza.events.security.AuthenticatedUser;
 import com.reza.events.port.UserQueryPort;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractJwtAuthProvider implements AuthenticationProvider {
 
@@ -30,10 +32,17 @@ public abstract class AbstractJwtAuthProvider implements AuthenticationProvider 
     }
 
     protected Collection<GrantedAuthority> expandAuthorities(AuthenticatedUser user){
-        var baseAuthority = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .collect(Collectors.toSet());
+        if(user.getRoles() == null || user.getRoles().isEmpty()){
+            return List.of();
+        }
 
-        return roleHierarchyService.getReachableAuthorities(baseAuthority);
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        for(String roleName : user.getRoles()){
+            UserRoleType roleType = UserRoleType.valueOf(roleName);
+            authorities.addAll(roleHierarchyService.buildAuthorities(roleType));
+        }
+
+        return authorities;
     }
 }
