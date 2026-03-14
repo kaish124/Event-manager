@@ -8,6 +8,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -16,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Map;
 
+@Slf4j
 public abstract class AbstractJwtAuthFilter extends OncePerRequestFilter {
 
     protected final AuthenticationManager authenticationManager;
@@ -30,15 +32,22 @@ public abstract class AbstractJwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+        String requestURI = request.getRequestURI();
+        String method = request.getMethod();
+        
+        log.debug("JWT Filter processing {} {}", method, requestURI);
         RequestStateHolder.setupRequest(request);
+        
         try{
             boolean proceed = doAuthFilter(request, response, chain);
             if(proceed) {
                 chain.doFilter(request, response);
             }
         }catch(AuthenticationException e){
+            log.warn("Authentication failed for {} {}: {}", method, requestURI, e.getMessage());
             sendError(response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }catch(Exception e){
+            log.error("Error processing {} {}: {}", method, requestURI, e.getMessage(), e);
             sendError(response, HttpServletResponse.SC_FORBIDDEN, e.getMessage());
         }finally{
             RequestStateHolder.teardownRequest();
@@ -48,23 +57,28 @@ public abstract class AbstractJwtAuthFilter extends OncePerRequestFilter {
     protected abstract boolean doAuthFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain);
 
     protected void processTokenAuthentication(Authentication preAuthToken) {
+        log.debug("Processing token authentication");
         Authentication auth = authenticationManager.authenticate(preAuthToken);
         SecurityUtil.setCurrentUser(auth);
 
         if(auth.getPrincipal() instanceof AuthenticatedUser user){
             RequestStateHolder.setUserId(user.getId());
+            log.debug("User authenticated with id: {}", user.getId());
         }
     }
 
     protected String extractBearerToken(HttpServletRequest request){
         String bearerToken = request.getHeader("Authorization");
         if(bearerToken != null && bearerToken.startsWith("Bearer ")){
+            log.debug("Bearer token found in request");
             return bearerToken.substring(7);
         }
+        log.debug("No bearer token found in request");
         return null;
     }
 
     private void sendError(HttpServletResponse response, int status, String message) throws IOException {
+        log.error("Sending error response: {} - {}", status, message);
         response.setStatus(status);
         response.setContentType("application/json");
         response.getWriter().write(objectMapper.writeValueAsString(Map.of("error", message, "status", status)));

@@ -25,12 +25,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
-        var authToken = mapper.map(loginRequest, LoginAuthenticationToken.class);
+        var authToken = new LoginAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
 
         Authentication auth = authenticationManager.authenticate(authToken);
         AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
         String token = jwtTokenUtil.generateToken(user);
-        return LoginResponse.of(token, JwtTokenUtil.getExpirySeconds());
+        return LoginResponse.of(token, jwtTokenUtil.getExpirySeconds());
     }
 }

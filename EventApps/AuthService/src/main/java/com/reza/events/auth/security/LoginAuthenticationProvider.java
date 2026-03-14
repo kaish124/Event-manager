@@ -1,11 +1,13 @@
 package com.reza.events.auth.security;
 
 import com.reza.events.port.UserQueryPort;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+@Slf4j
 public class LoginAuthenticationProvider extends AbstractJwtAuthProvider{
     private final PasswordEncoder passwordEncoder;
 
@@ -17,7 +19,7 @@ public class LoginAuthenticationProvider extends AbstractJwtAuthProvider{
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         LoginAuthenticationToken token = (LoginAuthenticationToken) authentication;
-
+        log.debug("Authenticating user {}", token.getPrincipal());
         var user = userQueryPort.loadUser(token.getEmail());
 
         if(user == null){

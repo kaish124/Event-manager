@@ -50,7 +50,7 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain publicChain(HttpSecurity http) throws Exception {
         return http
-                .securityMatcher("/auth/**", "/services/public/**")
+                .securityMatcher("services/auth/**", "/services/public/**")
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(AbstractHttpConfigurer::disable)
