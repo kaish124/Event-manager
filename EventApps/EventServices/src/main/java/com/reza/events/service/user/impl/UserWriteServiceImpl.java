@@ -1,4 +1,4 @@
-package com.reza.events.service.impl;
+package com.reza.events.service.user.impl;
 
 import com.reza.events.domain.entity.Role;
 import com.reza.events.domain.entity.User;
@@ -6,14 +6,11 @@ import com.reza.events.domain.entity.UserRole;
 import com.reza.events.dto.RoleBean;
 import com.reza.events.dto.UserDto;
 import com.reza.events.repository.UserRepository;
-import com.reza.events.service.UserWriteService;
+import com.reza.events.service.user.UserWriteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Slf4j
 @Service

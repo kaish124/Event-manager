@@ -1,9 +1,9 @@
-package com.reza.events.service.impl;
+package com.reza.events.service.user.impl;
 
 import com.reza.events.domain.entity.User;
 import com.reza.events.dto.UserDto;
 import com.reza.events.repository.UserRepository;
-import com.reza.events.service.UserReadService;
+import com.reza.events.service.user.UserReadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;

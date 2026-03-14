@@ -19,10 +19,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
 
     @Override
     public boolean hasPermission(Authentication authentication, Serializable targetId, String targetType, Object permission) {
-        if(authentication == null || !(permission instanceof String permName)) {
-            return false;
-        }
-        return hasPermissionAuthority(authentication, permName);
+        throw new UnsupportedOperationException("ID and class permission are not supported yet.");
     }
 
     private boolean hasPermissionAuthority(Authentication authentication, String permName) {
@@ -32,7 +29,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
             return false;
         }
 
-        String requiredAuthority = "PERM" +  permName;
+        String requiredAuthority = "PERM_" +  permName;
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(requiredAuthority::equals);

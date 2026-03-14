@@ -29,6 +29,7 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    @Bean
     public MethodSecurityExpressionHandler methodSecurityExpressionHandler(){
         DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
         handler.setPermissionEvaluator(customPermissionEvaluator());

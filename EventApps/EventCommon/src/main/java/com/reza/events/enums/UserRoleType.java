@@ -21,7 +21,8 @@ public enum UserRoleType {
 
     EVENT_MANAGER(
             UserPermission.VIEW_EVENT,
-            UserPermission.VIEW_REGISTRATION
+            UserPermission.VIEW_REGISTRATION,
+            UserPermission.VIEW_USER
     ),
 
     EVENT_ADMIN(
@@ -30,7 +31,12 @@ public enum UserRoleType {
             UserPermission.DELETE_EVENT,
             UserPermission.VIEW_EVENT,
             UserPermission.VIEW_REGISTRATION,
-            UserPermission.MANAGE_REGISTRATION
+            UserPermission.MANAGE_REGISTRATION,
+            UserPermission.VIEW_USER
+    ),
+    SUPER_ADMIN(
+            UserPermission.MANAGE_USER,
+            UserPermission.VIEW_USER
     );
 
 
