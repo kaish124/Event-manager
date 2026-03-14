@@ -4,10 +4,12 @@ import com.reza.events.domain.entity.User;
 import com.reza.events.domain.entity.UserRole;
 import com.reza.events.security.AuthenticatedUser;
 import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Component
 public class UserToAuthenticatedUser implements MappingConfigurer{
     @Override
     public void configure(ModelMapper modelMapper) {

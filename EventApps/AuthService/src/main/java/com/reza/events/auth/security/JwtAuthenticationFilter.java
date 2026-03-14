@@ -29,6 +29,6 @@ public class JwtAuthenticationFilter extends AbstractJwtAuthFilter{
         if(currentUser == null) return;
         String newToken = jwtTokenUtil.generateToken(currentUser);
         response.setHeader("X-Refreshed-Token", "Bearer " + newToken);
-        response.setHeader("X-Token_Expires", String.valueOf(System.currentTimeMillis() / 1000 + JwtTokenUtil.getExpirySeconds()));
+        response.setHeader("X-Token-Expires", String.valueOf(System.currentTimeMillis() / 1000 + jwtTokenUtil.getExpirySeconds()));
     }
 }

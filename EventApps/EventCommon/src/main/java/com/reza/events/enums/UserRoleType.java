@@ -1,4 +1,4 @@
-package com.reza.events.domain.entity;
+package com.reza.events.enums;
 
 public enum UserRoleType {
     EVENT_ADMIN,

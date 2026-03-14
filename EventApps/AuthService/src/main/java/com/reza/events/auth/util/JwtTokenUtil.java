@@ -13,11 +13,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class JwtTokenUtil {
-    @Value("${jwt.secret")
+    @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiry-second:3600")
-    private static long expirySeconds;
+    @Value("${jwt.expiry-second:3600}")
+    private long expirySeconds;
 
     @Value("${jwt.issuer:https://events.reza.com}")
     private String issuer;
@@ -59,7 +59,7 @@ public class JwtTokenUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public static long getExpirySeconds(){
+    public long getExpirySeconds(){
         return expirySeconds;
     }
 }
