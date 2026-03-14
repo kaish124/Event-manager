@@ -30,8 +30,25 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "user")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserRole> userRoles;
+
+    // Convenience method to add a user role
+    public void addUserRole(UserRole userRole) {
+        if (userRoles == null) {
+            userRoles = new java.util.HashSet<>();
+        }
+        userRoles.add(userRole);
+        userRole.setUser(this);
+    }
+
+    // Convenience method to remove a user role
+    public void removeUserRole(UserRole userRole) {
+        if (userRoles != null) {
+            userRoles.remove(userRole);
+            userRole.setUser(null);
+        }
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -15,5 +15,5 @@ public class UserDto {
     private String firstName;
     private String lastName;
     private String password;
-    private List<String> roles;
+    private List<RoleBean> roles;
 }
