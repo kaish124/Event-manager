@@ -43,7 +43,7 @@ class UserDtoToUserTest {
                 .id(2L)
                 .name("Attendee App User")
                 .description("Attendee application user role")
-                .type(UserRoleType.ATTENDEE_APP_USER)
+                .type(UserRoleType.REQUESTER)
                 .userRoleId(102L)
                 .build();
 
@@ -93,7 +93,7 @@ class UserDtoToUserTest {
 
         // Check user role mapping
         UserRole regularUserRole = userRoles.stream()
-                .filter(ur -> ur.getRole().getType() == UserRoleType.ATTENDEE_APP_USER)
+                .filter(ur -> ur.getRole().getType() == UserRoleType.REQUESTER)
                 .findFirst()
                 .orElse(null);
         assertThat(regularUserRole).isNotNull();
@@ -104,7 +104,7 @@ class UserDtoToUserTest {
         assertThat(userRole.getId()).isEqualTo(2L);
         assertThat(userRole.getName()).isEqualTo("Attendee App User");
         assertThat(userRole.getDescription()).isEqualTo("Attendee application user role");
-        assertThat(userRole.getType()).isEqualTo(UserRoleType.ATTENDEE_APP_USER);
+        assertThat(userRole.getType()).isEqualTo(UserRoleType.REQUESTER);
     }
 
     @Test

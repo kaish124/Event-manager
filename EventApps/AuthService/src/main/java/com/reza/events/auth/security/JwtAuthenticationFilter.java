@@ -15,9 +15,18 @@ public class JwtAuthenticationFilter extends AbstractJwtAuthFilter{
 
     @Override
     protected boolean doAuthFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) {
-        String rawToken = request.getHeader("Authorization");
-        if(rawToken == null || rawToken.isBlank())
+        String authHeader = request.getHeader("Authorization");
+        if(authHeader == null || authHeader.isBlank())
             return true;
+            
+        // Handle both "Bearer token" and raw token formats
+        String rawToken;
+        if(authHeader.startsWith("Bearer ")) {
+            rawToken = authHeader.substring(7);
+        } else {
+            rawToken = authHeader;
+        }
+        
         JwtAuthenticationToken preAuthToken = new JwtAuthenticationToken(rawToken);
         processTokenAuthentication(preAuthToken);
         issueRefreshedToken(response);

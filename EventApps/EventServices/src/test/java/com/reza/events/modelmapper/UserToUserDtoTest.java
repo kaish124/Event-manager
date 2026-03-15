@@ -48,7 +48,7 @@ class UserToUserDtoTest {
         userRole.setId(2L);
         userRole.setName("Attendee App User");
         userRole.setDescription("Attendee application user role");
-        userRole.setType(UserRoleType.ATTENDEE_APP_USER);
+        userRole.setType(UserRoleType.REQUESTER);
 
         // Create user roles
         UserRole adminUserRole = new UserRole();
@@ -97,7 +97,7 @@ class UserToUserDtoTest {
 
         // Check user role
         RoleBean userRoleBean = roles.stream()
-                .filter(r -> r.getType() == UserRoleType.ATTENDEE_APP_USER)
+                .filter(r -> r.getType() == UserRoleType.REQUESTER)
                 .findFirst()
                 .orElse(null);
         assertThat(userRoleBean).isNotNull();

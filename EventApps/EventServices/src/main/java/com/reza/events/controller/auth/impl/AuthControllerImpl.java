@@ -3,7 +3,7 @@ package com.reza.events.controller.auth.impl;
 import com.reza.events.controller.auth.AuthController;
 import com.reza.events.dto.LoginRequest;
 import com.reza.events.dto.LoginResponse;
-import com.reza.events.port.auth.AuthService;
+import com.reza.events.service.auth.AuthService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;

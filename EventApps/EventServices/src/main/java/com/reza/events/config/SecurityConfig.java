@@ -1,18 +1,19 @@
 package com.reza.events.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.reza.events.auth.security.JwtAuthenticationFilter;
-import com.reza.events.auth.security.JwtAuthenticationProvider;
-import com.reza.events.auth.security.LoginAuthenticationProvider;
-import com.reza.events.auth.security.RoleHierarchyService;
+import com.reza.events.auth.security.*;
 import com.reza.events.auth.util.JwtTokenUtil;
 import com.reza.events.port.UserQueryPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,7 +25,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import java.util.List;
 
 @Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
+
+    @Bean
+    public MethodSecurityExpressionHandler methodSecurityExpressionHandler(){
+        DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
+        handler.setPermissionEvaluator(customPermissionEvaluator());
+        return handler;
+    }
 
     @Bean
     @Order(0)
@@ -100,6 +110,9 @@ public class SecurityConfig {
         return new  JwtAuthenticationFilter(authenticationManager, JwtTokenUtil, objectMapper);
     }
 
-
+    @Bean
+    public CustomPermissionEvaluator customPermissionEvaluator(){
+        return new CustomPermissionEvaluator();
+    }
 
 }
