@@ -2,6 +2,7 @@ package com.reza.events.service.user.impl;
 
 import com.reza.events.domain.entity.User;
 import com.reza.events.dto.UserDto;
+import com.reza.events.exception.ResourceNotFoundException;
 import com.reza.events.repository.UserRepository;
 import com.reza.events.service.user.UserReadService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class UserReadServiceImpl implements UserReadService {
     public UserDto getUserById(Long id) {
         log.debug("Getting user by id: {}", id);
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         log.info("Found user with id: {}", id);
         return modelMapper.map(user, UserDto.class);
     }
@@ -45,7 +46,7 @@ public class UserReadServiceImpl implements UserReadService {
         User user = userRepository.findByEmail(email);
         if (user == null) {
             log.warn("User not found with email: {}", email);
-            throw new RuntimeException("User not found with email: " + email);
+            throw new ResourceNotFoundException("User not found with email: " + email);
         }
         log.info("Found user with email: {}", email);
         return modelMapper.map(user, UserDto.class);

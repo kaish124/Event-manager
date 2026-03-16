@@ -1,7 +1,11 @@
 package com.reza.events.auth.util;
 
+import com.reza.events.auth.exception.TokenExpiredException;
+import com.reza.events.auth.exception.TokenInvalidException;
 import com.reza.events.security.AuthenticatedUser;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,11 +48,17 @@ public class JwtTokenUtil {
     }
 
     public Claims parseToken(String token) {
-        return Jwts.parser()
-                .verifyWith(buildSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        try {
+            return Jwts.parser()
+                    .verifyWith(buildSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        }catch (ExpiredJwtException e){
+            throw new TokenExpiredException(e);
+        } catch(JwtException e){
+            throw new TokenInvalidException(e);
+        }
     }
 
     public String extractSubject(String token) {
@@ -59,7 +69,7 @@ public class JwtTokenUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public long getExpirySeconds(){
+    public long getExpirySeconds() {
         return expirySeconds;
     }
 }

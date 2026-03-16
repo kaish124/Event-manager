@@ -5,6 +5,7 @@ import com.reza.events.domain.entity.User;
 import com.reza.events.domain.entity.UserRole;
 import com.reza.events.dto.RoleBean;
 import com.reza.events.dto.UserDto;
+import com.reza.events.exception.ResourceNotFoundException;
 import com.reza.events.repository.UserRepository;
 import com.reza.events.service.user.UserWriteService;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,7 @@ public class UserWriteServiceImpl implements UserWriteService {
     public UserDto updateUser(Long id, UserDto userDto) {
         log.debug("Updating user with id: {}", id);
         User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         
         // Update basic fields
         existingUser.setFirstName(userDto.getFirstName());
@@ -86,7 +87,7 @@ public class UserWriteServiceImpl implements UserWriteService {
         log.debug("Deleting user with id: {}", id);
         if (!userRepository.existsById(id)) {
             log.warn("User not found for deletion with id: {}", id);
-            throw new RuntimeException("User not found with id: " + id);
+            throw new ResourceNotFoundException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
         log.info("User deleted successfully with id: {}", id);
