@@ -1,6 +1,7 @@
 package com.reza.events.auth.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reza.events.auth.handler.JwtAuthEntryPoint;
 import com.reza.events.auth.util.JwtTokenUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,8 +10,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 
 public class JwtAuthenticationFilter extends AbstractJwtAuthFilter{
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil, ObjectMapper objectMapper) {
-        super(authenticationManager, jwtTokenUtil, objectMapper);
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil, ObjectMapper objectMapper, JwtAuthEntryPoint authEntryPoint) {
+        super(authenticationManager, jwtTokenUtil, objectMapper, authEntryPoint);
     }
 
     @Override

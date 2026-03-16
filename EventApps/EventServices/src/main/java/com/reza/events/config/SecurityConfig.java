@@ -1,6 +1,8 @@
 package com.reza.events.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reza.events.auth.handler.JwtAccessDeniedHandler;
+import com.reza.events.auth.handler.JwtAuthEntryPoint;
 import com.reza.events.auth.security.*;
 import com.reza.events.auth.util.JwtTokenUtil;
 import com.reza.events.port.UserQueryPort;
@@ -60,9 +62,13 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
-    public SecurityFilterChain servicesChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
+    public SecurityFilterChain servicesChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter, JwtAuthEntryPoint authEntryPoint, JwtAccessDeniedHandler accessDeniedHandler) throws Exception {
         return http
                 .securityMatcher("/services/**")
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(authEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -106,13 +112,24 @@ public class SecurityConfig {
     public JwtAuthenticationFilter jwtAuthenticationFilter(
             AuthenticationManager authenticationManager,
             JwtTokenUtil JwtTokenUtil,
-            ObjectMapper objectMapper){
-        return new  JwtAuthenticationFilter(authenticationManager, JwtTokenUtil, objectMapper);
+            ObjectMapper objectMapper,
+            JwtAuthEntryPoint authEntryPoint){
+        return new  JwtAuthenticationFilter(authenticationManager, JwtTokenUtil, objectMapper, authEntryPoint);
     }
 
     @Bean
     public CustomPermissionEvaluator customPermissionEvaluator(){
         return new CustomPermissionEvaluator();
+    }
+
+    @Bean
+    public JwtAccessDeniedHandler accessDeniedHandler(ObjectMapper objectMapper){
+        return new JwtAccessDeniedHandler(objectMapper);
+    }
+
+    @Bean
+    public JwtAuthEntryPoint authEntryPoint(ObjectMapper objectMapper){
+        return new JwtAuthEntryPoint(objectMapper);
     }
 
 }

@@ -1,5 +1,7 @@
 package com.reza.events.auth.security;
 
+import com.reza.events.auth.exception.TokenExpiredException;
+import com.reza.events.auth.exception.TokenInvalidException;
 import com.reza.events.auth.util.JwtTokenUtil;
 import com.reza.events.port.UserQueryPort;
 import io.jsonwebtoken.Claims;
@@ -30,13 +32,7 @@ public class JwtAuthenticationProvider extends AbstractJwtAuthProvider{
     }
 
     private Claims validateToken(String rawToken) {
-        try{
-            return jwtTokenUtil.parseToken(rawToken);
-        }catch (ExpiredJwtException ex){
-            throw new InsufficientAuthenticationException("Token has expired", ex);
-        }catch (Exception ex){
-            throw new InsufficientAuthenticationException("Invalid token", ex);
-        }
+        return jwtTokenUtil.parseToken(rawToken);
     }
 
     @Override
