@@ -1,17 +1,17 @@
 package com.reza.events.auth.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.reza.events.auth.exception.TokenExpiredException;
-import com.reza.events.auth.exception.TokenInvalidException;
 import com.reza.events.auth.handler.JwtAuthEntryPoint;
 import com.reza.events.auth.util.JwtTokenUtil;
-import com.reza.events.security.AuthenticatedUser;
 import com.reza.events.http.RequestStateHolder;
+import com.reza.events.logging.LogKeys;
+import com.reza.events.logging.Logger;
+import com.reza.events.logging.LoggerFactory;
+import com.reza.events.security.AuthenticatedUser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
@@ -20,8 +20,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@Slf4j
 public abstract class AbstractJwtAuthFilter extends OncePerRequestFilter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractJwtAuthFilter.class);
 
     protected final AuthenticationManager authenticationManager;
     protected final JwtTokenUtil jwtTokenUtil;
@@ -40,8 +41,7 @@ public abstract class AbstractJwtAuthFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         String method = request.getMethod();
 
-        log.debug("JWT Filter processing {} {}", method, requestURI);
-        RequestStateHolder.setupRequest(request);
+        LOGGER.debug(LogKeys.MSG, "JWT Filter processing request", LogKeys.METHOD, method, LogKeys.URI, requestURI);
 
         try {
             boolean proceed = doAuthFilter(request, response, chain);
@@ -51,33 +51,32 @@ public abstract class AbstractJwtAuthFilter extends OncePerRequestFilter {
         } catch (AuthenticationException e) {
             authEntryPoint.commence(request, response, e);
         } catch (Exception e) {
-            log.error("Unexpected error during filter processing {} {}: {}", method, requestURI, e.getMessage(), e);
+            LOGGER.error(e, LogKeys.MSG, "Unexpected error during filter processing", LogKeys.METHOD, method, LogKeys.URI, requestURI);
             throw new InternalAuthenticationServiceException("Internal error during authentication", e);
         } finally {
-            RequestStateHolder.teardownRequest();
         }
     }
 
     protected abstract boolean doAuthFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain);
 
     protected void processTokenAuthentication(Authentication preAuthToken) {
-        log.debug("Processing token authentication");
+        LOGGER.debug(LogKeys.MSG, "Processing token authentication");
         Authentication auth = authenticationManager.authenticate(preAuthToken);
         SecurityUtil.setCurrentUser(auth);
 
         if (auth.getPrincipal() instanceof AuthenticatedUser user) {
             RequestStateHolder.setUserId(user.getId());
-            log.debug("User authenticated with id: {}", user.getId());
+            LOGGER.debug(LogKeys.MSG, "User authenticated", LogKeys.USER_ID, user.getId());
         }
     }
 
     protected String extractBearerToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            log.debug("Bearer token found in request");
+            LOGGER.debug(LogKeys.MSG, "Bearer token found in request");
             return bearerToken.substring(7);
         }
-        log.debug("No bearer token found in request");
+        LOGGER.debug(LogKeys.MSG, "No bearer token found in request");
         return null;
     }
 }

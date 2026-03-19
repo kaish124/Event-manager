@@ -1,15 +1,16 @@
 package com.reza.events.spring;
 
 import com.reza.events.exception.*;
+import com.reza.events.logging.LogKeys;
+import com.reza.events.logging.Logger;
+import com.reza.events.logging.LoggerFactory;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,8 +22,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
-@Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
@@ -40,13 +42,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 violations
         );
 
-        log.debug("Validation Failed: {} violation(s)", violations.size());
+        LOGGER.debug(LogKeys.MSG, "Validation failed", "VIOLATIONS_COUNT", violations.size());
         return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(ValidationException ex, WebRequest request) {
-        log.debug("Validation Failed: {}", ex.getMessage());
+        LOGGER.debug(LogKeys.MSG, "Validation failed", LogKeys.ERROR_MESSAGE, ex.getMessage());
 
         ErrorResponse body = ex.getFieldViolations().isEmpty()
                 ? ErrorResponse.of(
@@ -66,7 +68,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
-        log.debug("Resource Not Found: {}", ex.getMessage());
+        LOGGER.debug(LogKeys.MSG, "Resource not found", LogKeys.ERROR_MESSAGE, ex.getMessage());
 
         ErrorResponse body = ErrorResponse.of(
                 HttpStatus.NOT_FOUND.value(),
@@ -75,13 +77,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 extractPath(request)
         );
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ErrorResponse> handleAppException(AppException ex, WebRequest request) {
-
-        log.error("Application Exception: [{}]: {}", ex.getStatus(), ex.getMessage(), ex);
+        LOGGER.error(ex, LogKeys.MSG, "Application exception", LogKeys.STATUS, ex.getStatus().value());
 
         ErrorResponse body = ErrorResponse.of(
                 ex.getStatus().value(),
@@ -89,7 +90,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ex.getMessage(),
                 extractPath(request)
         );
-        return ResponseEntity.status(ex.getStatus()).body(body);
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -112,7 +113,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(OptimisticLockingFailureException ex, WebRequest request) {
-        log.warn("Optimistic Locking Failure: {}", ex.getMessage());
+        LOGGER.warn(LogKeys.MSG, "Optimistic locking failure", LogKeys.ERROR_MESSAGE, ex.getMessage());
 
         ErrorResponse body = ErrorResponse.of(
                 HttpStatus.CONFLICT.value(),
@@ -121,15 +122,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 extractPath(request)
         );
 
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleAll(Exception ex, WebRequest request) throws Exception {
-        if(ex instanceof AccessDeniedException) {
-            throw ex;
+    public ResponseEntity<ErrorResponse> handleAll(Exception ex, WebRequest request) {
+        // Don't handle AuthenticationException - let Spring Security handle it
+        if (ex instanceof org.springframework.security.core.AuthenticationException) {
+            throw (org.springframework.security.core.AuthenticationException) ex;
         }
-        log.error("Unhandled exception at [{}]: {}", extractPath(request), ex.getMessage());
+        
+        // Don't handle AccessDeniedException - let Spring Security handle it
+        if (ex instanceof org.springframework.security.access.AccessDeniedException) {
+            throw (org.springframework.security.access.AccessDeniedException) ex;
+        }
+        
+        // Don't handle AuthorizationDeniedException - let Spring Security handle it
+        if (ex instanceof org.springframework.security.authorization.AuthorizationDeniedException) {
+            throw (org.springframework.security.authorization.AuthorizationDeniedException) ex;
+        }
+        
+        LOGGER.error(ex, LogKeys.MSG, "Unhandled exception", LogKeys.PATH, extractPath(request));
 
         ErrorResponse body = ErrorResponse.of(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
@@ -138,7 +151,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 extractPath(request)
         );
 
-        return ResponseEntity.internalServerError().body(body);
+        return ResponseEntity.badRequest().body(body);
     }
 
 

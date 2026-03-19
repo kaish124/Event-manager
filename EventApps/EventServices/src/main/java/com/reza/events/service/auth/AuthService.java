@@ -14,8 +14,6 @@ public interface AuthService {
      *
      * @param loginRequest the login request containing email and password
      * @return LoginResponse containing JWT token and user information
-     * @throws com.reza.events.exception.AuthenticationException if authentication fails
-     * @throws com.reza.events.exception.UserNotFoundException if no user is found with the given email
      */
     public LoginResponse login(LoginRequest loginRequest);
 }

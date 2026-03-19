@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds">
+
+    <!-- Suppress Logback's own startup output -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         APPENDERS
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Application log — full pattern with all MDC request context fields -->
+    <appender name="appLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH:-${user.home}/logs}/event-app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH:-${user.home}/logs}/event-app-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSZ", UTC} LVL=%p THREAD=%t TXN_ID=%X{TXN_ID} USER_ID=%X{USER_ID} APP_ID=%X{APP_ID} MARKET=%X{MARKET} SOURCE=%X{SOURCE} URI=%X{URI} METHOD=%X{METHOD} CLS=%c{0} ALINE=%L LINE=%X{LINE_NO} MSG="%m" %X{LOG_DATA}%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Performance log — minimal pattern, timing data only -->
+    <appender name="perfLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH:-${user.home}/logs}/event-perf.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH:-${user.home}/logs}/event-perf-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSZ", UTC} LVL=%p THREAD=%t TXN_ID=%X{TXN_ID} USER_ID=%X{USER_ID} %X{LOG_DATA}%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PROFILE-SPECIFIC APPENDERS
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Console-only appender for test/default profiles -->
+    <springProfile name="test,default">
+        <appender name="PROFILE_APPENDER" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <charset>UTF-8</charset>
+                <pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSZ", UTC} %p [%t] CLS=%c{1} ALINE=%L LINE=%X{LINE_NO} MSG="%m" %X{LOG_DATA}%n</pattern>
+            </encoder>
+        </appender>
+        
+        <appender name="PERF_APPENDER" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <charset>UTF-8</charset>
+                <pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSZ", UTC} %p [%t] CLS=%c{1} ALINE=%L LINE=%X{LINE_NO} MSG="%m" %X{LOG_DATA}%n</pattern>
+            </encoder>
+        </appender>
+    </springProfile>
+
+    <!-- File appender for all other profiles (dev, it, staging, prod) -->
+    <springProfile name="!test &amp; !default">
+        <appender name="PROFILE_APPENDER" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>500</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <appender-ref ref="appLog"/>
+        </appender>
+        
+        <appender name="PERF_APPENDER" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>500</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <appender-ref ref="perfLog"/>
+        </appender>
+    </springProfile>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         NAMED LOGGER: PERFORMANCE
+         ═══════════════════════════════════════════════════════════════════ -->
+    <logger name="PERFORMANCE" additivity="false" level="INFO">
+        <appender-ref ref="PERF_APPENDER"/>
+    </logger>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LOGGER LEVELS
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Your application packages -->
+    <logger name="com.reza"                     level="INFO"/>
+    <logger name="com.reza.events.auth"         level="INFO"/>
+    <logger name="com.reza.events.service"      level="INFO"/>
+    <logger name="com.reza.events.controller"   level="INFO"/>
+
+    <!-- Third-party logging - selective INFO for startup, WARN for runtime -->
+    <logger name="org.springframework.boot"                level="INFO"/>
+    <logger name="org.springframework.boot.web.embedded"   level="INFO"/>
+    <logger name="org.apache.catalina.core"               level="INFO"/>
+    <logger name="org.springframework"                     level="WARN"/>
+    <logger name="org.springframework.security"           level="ERROR"/>
+    <logger name="org.springframework.web"                level="ERROR"/>
+    <logger name="org.hibernate.SQL"                      level="WARN"/>
+    <logger name="org.hibernate.type"                     level="WARN"/>
+    <logger name="io.jsonwebtoken"                        level="ERROR"/>
+    <logger name="org.apache.http"                        level="ERROR"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ROOT LOGGER
+         Uses profile-specific appender defined above
+         ═══════════════════════════════════════════════════════════════════ -->
+    <root level="INFO">
+        <appender-ref ref="PROFILE_APPENDER"/>
+    </root>
+
+</configuration>
