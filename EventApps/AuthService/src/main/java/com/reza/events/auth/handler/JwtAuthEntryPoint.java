@@ -3,11 +3,12 @@ package com.reza.events.auth.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.reza.events.auth.exception.AuthException;
 import com.reza.events.exception.ErrorResponse;
+import com.reza.events.logging.LogKeys;
+import com.reza.events.logging.Logger;
+import com.reza.events.logging.LoggerFactory;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
@@ -17,7 +18,7 @@ import java.io.IOException;
 
 public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
 
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthEntryPoint.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthEntryPoint.class);
     private final ObjectMapper objectMapper;
 
     public JwtAuthEntryPoint(ObjectMapper objectMapper) {
@@ -26,7 +27,7 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        log.warn("Authentication failed [{}] {}", request.getRequestURI(), authException.getMessage());
+        LOGGER.warn(LogKeys.MSG, "Authentication failed", LogKeys.URI, request.getRequestURI(), LogKeys.ERROR_MESSAGE, authException.getMessage());
 
         ErrorResponse body = ErrorResponse.of(
                 HttpStatus.UNAUTHORIZED.value(),

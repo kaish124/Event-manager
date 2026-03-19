@@ -2,47 +2,43 @@ package com.reza.events.controller.user.impl;
 
 import com.reza.events.controller.user.UserWriteController;
 import com.reza.events.dto.UserDto;
+import com.reza.events.logging.LogKeys;
+import com.reza.events.logging.Logger;
+import com.reza.events.logging.LoggerFactory;
 import com.reza.events.service.user.UserWriteService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Slf4j
 @RestController
-@RequestMapping("/services/user")
 @RequiredArgsConstructor
 public class UserWriteControllerImpl implements UserWriteController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserWriteControllerImpl.class);
     private final UserWriteService userWriteService;
 
     @Override
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<UserDto> createUser(UserDto userDto) {
-        log.debug("POST /services/user - Creating user with email: {}", userDto.getEmail());
+        LOGGER.debug(LogKeys.MSG, "Creating user", LogKeys.EMAIL, userDto.getEmail());
         UserDto createdUser = userWriteService.createUser(userDto);
-        log.info("User created successfully with id: {}", createdUser.getId());
+        LOGGER.info(LogKeys.MSG, "User created successfully", LogKeys.USER_ID, createdUser.getId(), LogKeys.EMAIL, createdUser.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
     @Override
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<UserDto> updateUser(Long id, UserDto userDto) {
-        log.debug("PUT /services/user/{} - Updating user", id);
+        LOGGER.debug(LogKeys.MSG, "Updating user", LogKeys.USER_ID, id);
         UserDto updatedUser = userWriteService.updateUser(id, userDto);
-        log.info("User updated successfully with id: {}", id);
+        LOGGER.info(LogKeys.MSG, "User updated successfully", LogKeys.USER_ID, id);
         return ResponseEntity.ok(updatedUser);
     }
 
     @Override
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> deleteUser(Long id) {
-        log.debug("DELETE /services/user/{} - Deleting user", id);
+        LOGGER.debug(LogKeys.MSG, "Deleting user", LogKeys.USER_ID, id);
         userWriteService.deleteUser(id);
-        log.info("User deleted successfully with id: {}", id);
+        LOGGER.info(LogKeys.MSG, "User deleted successfully", LogKeys.USER_ID, id);
         return ResponseEntity.noContent().build();
     }
 }

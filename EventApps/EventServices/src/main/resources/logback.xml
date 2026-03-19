@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds">
+
+    <!-- Suppress Logback's own startup output -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         APPENDERS
+         Three physical destinations:
+           1. STDOUT        — console, used locally and in tests
+           2. appLog        — rolling file for all application logs
+           3. perfLog       — rolling file for performance/timing logs only
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- 1. Console — short pattern, easy to read in a terminal -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <charset>UTF-8</charset>
+            <!-- Fields: timestamp, level, thread, class (short), source line, MDC line no, message, key-value data -->
+            <pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSZ", UTC} %p [%t] CLS=%c{1} ALINE=%L LINE=%X{LINE_NO} MSG="%m" %X{LOG_DATA}%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 2. Application log — full pattern with all MDC request context fields -->
+    <appender name="appLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--
+            ${LOG_PATH} is a Spring Boot property that maps to:
+              logging.file.path=...  in application.properties
+
+            Spring Boot sets this variable before Logback initializes,
+            so logback.xml can read it directly.
+
+            The :- operator means "use LOG_PATH if set; otherwise fall back to user.home/logs".
+
+            Examples:
+              Production server:   logging.file.path=/var/log/jwt-app
+                                   → /var/log/jwt-app/jwt-app.log
+              Local development:   (not set in application.properties)
+                                   → /Users/kaish.reza/logs/jwt-app.log
+
+            Why NOT ${catalina.base}?
+              Spring Boot's embedded Tomcat sets catalina.base to a TEMP directory
+              (e.g. /tmp/tomcat.4321583153082858212.8080/) that is wiped on restart.
+              Never use it for log files with embedded servers.
+        -->
+        <file>${LOG_PATH:-${user.home}/logs}/event-app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH:-${user.home}/logs}/event-app-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFileNamingAndTriggeringPolicy">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder>
+            <charset>UTF-8</charset>
+            <!--
+                Every field is either:
+                  %X{KEY}  — read from MDC (set by RequestStateHolder)
+                  %p       — log level (Logback built-in)
+                  %t       — thread name (Logback built-in)
+                  %c{0}    — class name without package
+                  %L       — actual source line number
+                  %m       — the SLF4J message string (the MSG= value)
+                  %X{LOG_DATA} — the key=value pairs built by Logger.java
+            -->
+            <pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSZ", UTC} LVL=%p THREAD=%t TXN_ID=%X{TXN_ID} USER_ID=%X{USER_ID} APP_ID=%X{APP_ID} MARKET=%X{MARKET} SOURCE=%X{SOURCE} URI=%X{URI} METHOD=%X{METHOD} CLS=%c{0} ALINE=%L LINE=%X{LINE_NO} MSG="%m" %X{LOG_DATA}%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 3. Performance log — minimal pattern, timing data only -->
+    <appender name="perfLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH:-${user.home}/logs}/event-perf.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH:-${user.home}/logs}/event-perf-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFileNamingAndTriggeringPolicy">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSZ", UTC} LVL=%p THREAD=%t TXN_ID=%X{TXN_ID} USER_ID=%X{USER_ID} %X{LOG_DATA}%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ASYNC WRAPPERS
+         Async appenders put log events into a queue instead of writing to disk
+         on the request thread. A background thread drains the queue.
+         This removes disk I/O latency from your API response time.
+
+         queueSize=500         — holds up to 500 events before blocking
+         discardingThreshold=0 — NEVER discard events even when queue is 80% full
+                                 (default behaviour would drop DEBUG/INFO events)
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <appender name="asyncAppLog" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>500</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="appLog"/>
+    </appender>
+
+    <appender name="asyncPerfLog" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>500</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="perfLog"/>
+    </appender>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         NAMED LOGGER: PERFORMANCE
+         additivity="false" means performance events do NOT also go to the root
+         appender (they don't appear in jwt-app.log).
+         They go only to jwt-perf.log.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <logger name="PERFORMANCE" additivity="false" level="INFO">
+        <if condition='"test".equals(property("env")) || "".equals(property("env"))'>
+            <then><appender-ref ref="STDOUT"/></then>
+            <else><appender-ref ref="asyncPerfLog"/></else>
+        </if>
+    </logger>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LOGGER LEVELS
+         Application code: INFO — you want business-level events in production.
+         Noisy libraries:  ERROR or WARN — they produce unhelpful volume otherwise.
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Your application packages -->
+    <logger name="com.reza"          level="INFO"/>
+    <logger name="com.reza.events.auth"     level="INFO"/>
+    <logger name="com.reza.events.service"  level="INFO"/>
+    <logger name="com.reza.events.controller"     level="INFO"/>
+
+    <!-- Turn up to DEBUG during development if you need filter-level trace -->
+    <!-- <logger name="com.example.auth.security" level="DEBUG"/> -->
+
+    <!-- Third-party noise suppression -->
+    <logger name="org.springframework"          level="ERROR"/>
+    <logger name="org.springframework.security" level="ERROR"/>
+    <logger name="org.springframework.web"      level="ERROR"/>
+    <logger name="org.hibernate.SQL"            level="WARN"/>
+    <logger name="org.hibernate.type"           level="WARN"/>
+    <logger name="io.jsonwebtoken"              level="ERROR"/>
+    <logger name="org.apache.http"              level="ERROR"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ROOT LOGGER
+         Catches everything not covered by a named logger above.
+         In test/local (env is empty or "test"): write to console.
+         In all other environments:              write to async file.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <root level="WARN">
+        <if condition='"test".equals(property("env")) || "".equals(property("env"))'>
+            <then><appender-ref ref="STDOUT"/></then>
+            <else><appender-ref ref="asyncAppLog"/></else>
+        </if>
+    </root>
+
+</configuration>

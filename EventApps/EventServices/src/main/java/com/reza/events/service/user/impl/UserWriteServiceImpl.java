@@ -6,24 +6,26 @@ import com.reza.events.domain.entity.UserRole;
 import com.reza.events.dto.RoleBean;
 import com.reza.events.dto.UserDto;
 import com.reza.events.exception.ResourceNotFoundException;
+import com.reza.events.logging.LogKeys;
+import com.reza.events.logging.Logger;
+import com.reza.events.logging.LoggerFactory;
 import com.reza.events.repository.UserRepository;
 import com.reza.events.service.user.UserWriteService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserWriteServiceImpl implements UserWriteService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserWriteServiceImpl.class);
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
 
     @Override
     public UserDto createUser(UserDto userDto) {
-        log.debug("Creating user with email: {}", userDto.getEmail());
+        LOGGER.debug(LogKeys.MSG, "Creating user", LogKeys.EMAIL, userDto.getEmail());
         try {
             User user = modelMapper.map(userDto, User.class);
             
@@ -35,17 +37,17 @@ public class UserWriteServiceImpl implements UserWriteService {
             }
             
             User savedUser = userRepository.save(user);
-            log.info("User created successfully with id: {}", savedUser.getId());
+            LOGGER.info(LogKeys.MSG, "User created successfully", LogKeys.USER_ID, savedUser.getId(), LogKeys.EMAIL, savedUser.getEmail());
             return modelMapper.map(savedUser, UserDto.class);
         } catch (Exception e) {
-            log.error("Error creating user with email: {}", userDto.getEmail(), e);
+            LOGGER.error(e, LogKeys.MSG, "Error creating user", LogKeys.EMAIL, userDto.getEmail());
             throw e;
         }
     }
 
     @Override
     public UserDto updateUser(Long id, UserDto userDto) {
-        log.debug("Updating user with id: {}", id);
+        LOGGER.debug(LogKeys.MSG, "Updating user", LogKeys.USER_ID, id);
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         
@@ -78,18 +80,18 @@ public class UserWriteServiceImpl implements UserWriteService {
         }
         
         User updatedUser = userRepository.save(existingUser);
-        log.info("User updated successfully with id: {}", id);
+        LOGGER.info(LogKeys.MSG, "User updated successfully", LogKeys.USER_ID, id);
         return modelMapper.map(updatedUser, UserDto.class);
     }
 
     @Override
     public void deleteUser(Long id) {
-        log.debug("Deleting user with id: {}", id);
+        LOGGER.debug(LogKeys.MSG, "Deleting user", LogKeys.USER_ID, id);
         if (!userRepository.existsById(id)) {
-            log.warn("User not found for deletion with id: {}", id);
+            LOGGER.warn(LogKeys.MSG, "User not found for deletion", LogKeys.USER_ID, id);
             throw new ResourceNotFoundException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
-        log.info("User deleted successfully with id: {}", id);
+        LOGGER.info(LogKeys.MSG, "User deleted successfully", LogKeys.USER_ID, id);
     }
 }

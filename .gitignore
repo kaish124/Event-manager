@@ -6,6 +6,9 @@ target/
 
 scripts
 
+# Documentation folder (internal docs, not for version control)
+documents/
+
 ### STS ###
 .apt_generated
 .classpath
