@@ -11,7 +11,7 @@ import java.util.Set;
 @Setter
 @Entity
 @Table(name = "EM_USER")
-public class User {
+public class User extends AbstractAuditableEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

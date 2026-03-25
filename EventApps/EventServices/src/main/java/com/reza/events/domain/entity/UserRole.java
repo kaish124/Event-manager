@@ -10,7 +10,7 @@ import java.util.Objects;
 @Setter
 @Entity
 @Table(name = "EM_USER_ROLE")
-public class UserRole {
+public class UserRole extends AbstractAuditableEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)

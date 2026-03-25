@@ -7,11 +7,13 @@ import lombok.Setter;
 
 import java.util.Objects;
 
+
 @Getter
 @Setter
 @Entity
 @Table(name = "EM_ROLE")
-public class Role {
+@SequenceGenerator(name = AbstractEntity.ENTITY_SEQUENCE_GEN_NAME, sequenceName = "EM_ROLE_ID_SEQ", allocationSize = 1)
+public class Role extends AbstractAuditableEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
